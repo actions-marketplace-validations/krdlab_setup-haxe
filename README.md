@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: krdlab/setup-haxe@v2
         with:
-          haxe-version: 4.3.4
+          haxe-version: 4.3.7
       - run: |
           haxe -version
           haxelib install hxnodejs
@@ -46,7 +46,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: krdlab/setup-haxe@v2
         with:
-          haxe-version: 4.3.4
+          haxe-version: 4.3.7
           cache-dependency-path: 'lib.hxml'
       - run: |
           haxe -version
