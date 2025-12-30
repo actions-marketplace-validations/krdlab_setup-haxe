@@ -6,8 +6,8 @@
   "license": "MIT",
   "private": true,
   "engines": {
-    "node": ">=16",
-    "npm": ">=9"
+    "node": ">=20",
+    "npm": ">=11"
   },
   "main": "lib/main.js",
   "scripts": {
@@ -44,7 +44,8 @@
       "import/extensions": "off",
       "@typescript-eslint/object-curly-spacing": "off",
       "unicorn/no-array-method-this-argument": "off",
-      "unicorn/no-array-callback-reference": "off"
+      "unicorn/no-array-callback-reference": "off",
+      "unicorn/expiring-todo-comments": "off"
     }
   }
 }
