@@ -3,9 +3,10 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
+import * as crypto from 'node:crypto';
 import * as fs from 'node:fs';
-import * as path from 'node:path';
 import * as os from 'node:os';
+import * as path from 'node:path';
 import * as process from 'node:process';
 import * as tc from '@actions/tool-cache';
 import * as core from '@actions/core';
@@ -61,7 +62,8 @@ abstract class Asset {
   // Use curl because the toolkit's http-client does not support relative redirects.
   // see: https://github.com/actions/toolkit/blob/d47594b53638f7035a96b5ec1ed1e6caae66ee8d/packages/http-client/src/index.ts#L399-L405
   private async downloadWithCurl(url: string) {
-    const dest = path.join(this.getTempDir(), `haxe-download-${Date.now()}`);
+    const dest = path.join(this.getTempDir(), crypto.randomUUID());
+    core.debug(`downloading ${url} to ${dest}`);
     await exec('curl', ['-L', '-o', dest, url]);
     return dest;
   }

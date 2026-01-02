@@ -56,6 +56,8 @@ const external_node_path_namespaceObject = require("node:path");
 var lib_core = __nccwpck_require__(42186);
 // EXTERNAL MODULE: ./node_modules/@actions/exec/lib/exec.js
 var exec = __nccwpck_require__(71514);
+// EXTERNAL MODULE: external "node:crypto"
+var external_node_crypto_ = __nccwpck_require__(6005);
 // EXTERNAL MODULE: external "node:fs"
 var external_node_fs_ = __nccwpck_require__(87561);
 // EXTERNAL MODULE: external "node:os"
@@ -69,6 +71,7 @@ var tool_cache = __nccwpck_require__(27784);
 //
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
+
 
 
 
@@ -118,7 +121,8 @@ class Asset {
     // Use curl because the toolkit's http-client does not support relative redirects.
     // see: https://github.com/actions/toolkit/blob/d47594b53638f7035a96b5ec1ed1e6caae66ee8d/packages/http-client/src/index.ts#L399-L405
     async downloadWithCurl(url) {
-        const dest = external_node_path_namespaceObject.join(this.getTempDir(), `haxe-download-${Date.now()}`);
+        const dest = external_node_path_namespaceObject.join(this.getTempDir(), external_node_crypto_.randomUUID());
+        lib_core.debug(`downloading ${url} to ${dest}`);
         await (0,exec.exec)('curl', ['-L', '-o', dest, url]);
         return dest;
     }
