@@ -6,6 +6,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
+import * as process from 'node:process';
 import * as tc from '@actions/tool-cache';
 import * as core from '@actions/core';
 import { exec } from '@actions/exec';
@@ -45,7 +46,7 @@ abstract class Asset {
   }
 
   private async download() {
-    const downloadPath = await tc.downloadTool(this.downloadUrl);
+    const downloadPath = await this.downloadWithCurl(this.downloadUrl);
     const extractPath = await this.extract(downloadPath, this.fileNameWithoutExt, this.fileExt);
 
     const toolRoot = await this.findToolRoot(extractPath, this.isDirectoryNested);
@@ -55,6 +56,21 @@ abstract class Asset {
 
     core.debug(`found toolRoot: ${toolRoot}`);
     return toolRoot;
+  }
+
+  // Use curl because the toolkit's http-client does not support relative redirects.
+  // see: https://github.com/actions/toolkit/blob/d47594b53638f7035a96b5ec1ed1e6caae66ee8d/packages/http-client/src/index.ts#L399-L405
+  private async downloadWithCurl(url: string) {
+    const dest = path.join(this.getTempDir(), `haxe-download-${Date.now()}`);
+    await exec('curl', ['-L', '-o', dest, url]);
+    return dest;
+  }
+
+  private getTempDir() {
+    // See: https://docs.github.com/en/actions/reference/workflows-and-actions/variables
+    const temporary = process.env.RUNNER_TEMP ?? os.tmpdir();
+    core.debug(`temporary directory: ${temporary}`);
+    return temporary;
   }
 
   private async extract(file: string, dest: string, ext: AssetFileExt) {
@@ -149,6 +165,7 @@ export class NekoAsset extends Asset {
 
 // * NOTE https://github.com/HaxeFoundation/haxe/releases/download/4.0.5/haxe-4.0.5-linux64.tar.gz
 // * NOTE https://github.com/HaxeFoundation/haxe/releases/download/3.4.7/haxe-3.4.7-win64.zip
+// * NOTE https://build.haxe.org/builds/haxe/mac/haxe_latest.tar.gz
 export class HaxeAsset extends Asset {
   nightly = false;
 
