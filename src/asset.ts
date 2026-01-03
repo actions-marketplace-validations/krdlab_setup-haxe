@@ -62,11 +62,12 @@ abstract class Asset {
   // Use curl because the toolkit's http-client does not support relative redirects.
   // see: https://github.com/actions/toolkit/blob/d47594b53638f7035a96b5ec1ed1e6caae66ee8d/packages/http-client/src/index.ts#L399-L405
   private async downloadWithCurl(url: string) {
+    const validUrl = new URL(url);
     const dest = path.join(this.getTempDir(), crypto.randomUUID());
-    core.debug(`downloading ${url} to ${dest}`);
+    core.debug(`downloading ${validUrl.toString()} to ${dest}`);
 
     let stderr = '';
-    const exitCode = await exec('curl', ['-fsSL', '-o', dest, url], {
+    const exitCode = await exec('curl', ['-fsSL', '-o', dest, validUrl.toString()], {
       ignoreReturnCode: true,
       listeners: {
         stderr(data: Buffer) {
