@@ -64,7 +64,7 @@ abstract class Asset {
   private async downloadWithCurl(url: string) {
     const dest = path.join(this.getTempDir(), crypto.randomUUID());
     core.debug(`downloading ${url} to ${dest}`);
-    await exec('curl', ['-L', '-o', dest, url]);
+    await exec('curl', ['-fsSL', '-o', dest, url]);
     return dest;
   }
 

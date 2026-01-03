@@ -123,7 +123,7 @@ class Asset {
     async downloadWithCurl(url) {
         const dest = external_node_path_namespaceObject.join(this.getTempDir(), external_node_crypto_.randomUUID());
         lib_core.debug(`downloading ${url} to ${dest}`);
-        await (0,exec.exec)('curl', ['-L', '-o', dest, url]);
+        await (0,exec.exec)('curl', ['-fsSL', '-o', dest, url]);
         return dest;
     }
     getTempDir() {
