@@ -123,7 +123,19 @@ class Asset {
     async downloadWithCurl(url) {
         const dest = external_node_path_namespaceObject.join(this.getTempDir(), external_node_crypto_.randomUUID());
         lib_core.debug(`downloading ${url} to ${dest}`);
-        await (0,exec.exec)('curl', ['-fsSL', '-o', dest, url]);
+        let stderr = '';
+        const exitCode = await (0,exec.exec)('curl', ['-fsSL', '-o', dest, url], {
+            ignoreReturnCode: true,
+            listeners: {
+                stderr(data) {
+                    stderr += data.toString();
+                },
+            },
+        });
+        if (exitCode !== 0) {
+            const message = stderr.trim() || 'curl exited with a non-zero status but produced no error output.';
+            throw new Error(`Failed to download asset from ${url} (curl exit code ${exitCode}): ${message}`);
+        }
         return dest;
     }
     getTempDir() {
