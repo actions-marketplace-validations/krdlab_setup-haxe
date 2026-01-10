@@ -56,10 +56,14 @@ const external_node_path_namespaceObject = require("node:path");
 var lib_core = __nccwpck_require__(42186);
 // EXTERNAL MODULE: ./node_modules/@actions/exec/lib/exec.js
 var exec = __nccwpck_require__(71514);
+// EXTERNAL MODULE: external "node:crypto"
+var external_node_crypto_ = __nccwpck_require__(6005);
 // EXTERNAL MODULE: external "node:fs"
 var external_node_fs_ = __nccwpck_require__(87561);
 // EXTERNAL MODULE: external "node:os"
 var external_node_os_ = __nccwpck_require__(70612);
+// EXTERNAL MODULE: external "node:process"
+var external_node_process_ = __nccwpck_require__(97742);
 // EXTERNAL MODULE: ./node_modules/@actions/tool-cache/lib/tool-cache.js
 var tool_cache = __nccwpck_require__(27784);
 ;// CONCATENATED MODULE: ./lib/asset.js
@@ -67,6 +71,8 @@ var tool_cache = __nccwpck_require__(27784);
 //
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
+
+
 
 
 
@@ -103,7 +109,7 @@ class Asset {
         }
     }
     async download() {
-        const downloadPath = await tool_cache.downloadTool(this.downloadUrl);
+        const downloadPath = await this.downloadWithCurl(this.downloadUrl);
         const extractPath = await this.extract(downloadPath, this.fileNameWithoutExt, this.fileExt);
         const toolRoot = await this.findToolRoot(extractPath, this.isDirectoryNested);
         if (!toolRoot) {
@@ -111,6 +117,33 @@ class Asset {
         }
         lib_core.debug(`found toolRoot: ${toolRoot}`);
         return toolRoot;
+    }
+    // Use curl because the toolkit's http-client does not support relative redirects.
+    // see: https://github.com/actions/toolkit/blob/d47594b53638f7035a96b5ec1ed1e6caae66ee8d/packages/http-client/src/index.ts#L399-L405
+    async downloadWithCurl(url) {
+        const validUrl = new URL(url);
+        const dest = external_node_path_namespaceObject.join(this.getTempDir(), external_node_crypto_.randomUUID());
+        lib_core.debug(`downloading ${validUrl.toString()} to ${dest}`);
+        let stderr = '';
+        const exitCode = await (0,exec.exec)('curl', ['-fsSL', '-o', dest, validUrl.toString()], {
+            ignoreReturnCode: true,
+            listeners: {
+                stderr(data) {
+                    stderr += data.toString();
+                },
+            },
+        });
+        if (exitCode !== 0) {
+            const message = stderr.trim() || 'curl exited with a non-zero status but produced no error output.';
+            throw new Error(`Failed to download asset from ${url} (curl exit code ${exitCode}): ${message}`);
+        }
+        return dest;
+    }
+    getTempDir() {
+        // See: https://docs.github.com/en/actions/reference/workflows-and-actions/variables
+        const temporary = external_node_process_.env.RUNNER_TEMP ?? external_node_os_.tmpdir();
+        lib_core.debug(`temporary directory: ${temporary}`);
+        return temporary;
     }
     async extract(file, dest, ext) {
         if (external_node_fs_.existsSync(dest)) {
@@ -189,6 +222,7 @@ class NekoAsset extends Asset {
 }
 // * NOTE https://github.com/HaxeFoundation/haxe/releases/download/4.0.5/haxe-4.0.5-linux64.tar.gz
 // * NOTE https://github.com/HaxeFoundation/haxe/releases/download/3.4.7/haxe-3.4.7-win64.zip
+// * NOTE https://build.haxe.org/builds/haxe/mac/haxe_latest.tar.gz
 class HaxeAsset extends Asset {
     nightly = false;
     constructor(version, nightly, env = new Env()) {
